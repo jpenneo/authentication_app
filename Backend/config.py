@@ -1,7 +1,7 @@
 import os
 import json
 from firebase_admin import credentials, initialize_app, firestore
-import firebase_admin 
+import firebase_admin
 
 class Config:
     """Configuración para la aplicación Flask."""
@@ -12,8 +12,19 @@ class Config:
 
     # Determinar las credenciales de Firebase
     if os.getenv('FLASK_ENV') == 'production':
-        # En producción, las credenciales de Firebase vienen desde la variable de entorno
-        FIREBASE_CREDENTIALS = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
+        # En producción, las credenciales de Firebase vienen desde las variables de entorno
+        FIREBASE_CREDENTIALS = {
+            "type": "service_account",
+            "project_id": os.getenv("FIREBASE_PROJECT_ID"),
+            "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
+            "private_key": os.getenv("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
+            "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
+            "client_id": os.getenv("FIREBASE_CLIENT_ID"),
+            "auth_uri": os.getenv("FIREBASE_AUTH_URI"),
+            "token_uri": os.getenv("FIREBASE_TOKEN_URI"),
+            "auth_provider_x509_cert_url": os.getenv("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+            "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL")
+        }
     else:
         # En desarrollo, se usa el archivo local serviceAccountKey.json
         FIREBASE_CREDENTIALS_PATH = os.path.join(os.path.dirname(__file__), 'config', 'serviceAccountKey.json')
@@ -23,11 +34,11 @@ class Config:
         except FileNotFoundError:
             raise FileNotFoundError(f"El archivo de credenciales no se encuentra en la ruta: {FIREBASE_CREDENTIALS_PATH}")
 
-
 # Inicialización de Firebase
 def initialize_firebase():
     """Inicializa Firebase con las credenciales cargadas."""
-    cred = credentials.Certificate(Config.FIREBASE_CREDENTIALS_PATH)
+    # Usamos las credenciales de Firebase dependiendo del entorno
+    cred = credentials.Certificate(Config.FIREBASE_CREDENTIALS)
     if not firebase_admin._apps:  # Verifica si Firebase ya está inicializado
         initialize_app(cred)
     return firestore.client()
