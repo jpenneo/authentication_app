@@ -31,7 +31,11 @@ def register():
         )
 
         # Guardar información adicional del usuario en Firestore
-        user_data = {"email": data["email"], "password": hashed_password}
+        user_data = {
+            "user":data["user"],
+            "email": data["email"],
+              "password": hashed_password
+              }
         db.collection("users").document(firebase_user.uid).set(user_data)
 
         return jsonify({"message": "Usuario registrado exitosamente"}), 201
