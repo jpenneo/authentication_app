@@ -27,8 +27,6 @@
 </template>
 
 <script>
-import { auth } from "../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import DOMPurify from "dompurify";
 
 export default {
@@ -52,20 +50,37 @@ export default {
       const sanitizedPassword = this.sanitizeInput(this.password);
 
       try {
-        await signInWithEmailAndPassword(
-          auth,
-          sanitizedEmail,
-          sanitizedPassword
+        const response = await fetch(
+          `${process.env.VUE_APP_API_URL}/auth/inicio-sesion`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: sanitizedEmail,
+              password: sanitizedPassword,
+            }),
+          }
         );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Error al iniciar sesión");
+        }
+
+        const data = await response.json();
+
+        // Guardar el token en localStorage
+        localStorage.setItem("token", data.token);
+
+        // Guardar los datos del usuario o el token (si el backend lo envía)
+        console.log(data);
+
+        // Redirigir al dashboard
         this.$router.push("/dashboard");
       } catch (error) {
-        if (error.code === "auth/user-not-found") {
-          this.error = "Usuario no encontrado. Por favor, registre una cuenta.";
-        } else if (error.code === "auth/wrong-password") {
-          this.error = "Contraseña incorrecta. Por favor, intente de nuevo.";
-        } else {
-          this.error = this.sanitizeInput(error.message);
-        }
+        this.error = error.message;
       }
     },
   },

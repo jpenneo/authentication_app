@@ -2,7 +2,9 @@ import os
 import json
 from firebase_admin import credentials, initialize_app, firestore
 import firebase_admin
+from dotenv import load_dotenv
 
+load_dotenv()
 class Config:
     """Configuración para la aplicación Flask."""
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "default_secret")
@@ -33,6 +35,8 @@ class Config:
                 FIREBASE_CREDENTIALS = json.load(f)
         except FileNotFoundError:
             raise FileNotFoundError(f"El archivo de credenciales no se encuentra en la ruta: {FIREBASE_CREDENTIALS_PATH}")
+
+
 
 # Inicialización de Firebase
 def initialize_firebase():

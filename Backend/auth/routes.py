@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, redirect, url_for
 # Importar Firestore desde config.py
-from config import db  
+from config import db,Config  
 from firebase_admin.auth import (
     create_user as firebase_create_user,
     get_user_by_email as firebase_get_user_by_email,
@@ -8,17 +8,9 @@ from firebase_admin.auth import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 import traceback
+import jwt
 
 auth_bp = Blueprint("auth", __name__)
-
-
-# Ruta de la página principal
-@auth_bp.route("/", methods=["GET"])
-def main():
-    """
-    Redirige directamente a la página de inicio de sesión.
-    """
-    return redirect(url_for("auth.login_page"))
 
 
 # Ruta para la página de inicio de sesión
@@ -147,25 +139,29 @@ def dashboard():
         token = auth_header.split(" ")[1]
 
         # Verificar el token de Firebase
-        decoded_token = verify_id_token(token)
+        try:
+            decoded_token = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "El token ha expirado"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token inválido"}), 401
+
         user_email = decoded_token.get("email")
 
-        # Validar usuario en la base de datos
-        users_ref = db.collection("users")
-        query = users_ref.where("email", "==", user_email).limit(1)
-        user_docs = query.stream()
-        user_doc = next(user_docs, None)
+        # Obtener los datos del usuario desde Firestore
+        users_ref = db.collection('users')
+        user_docs = users_ref.where('email', '==', user_email).stream()
+        users = []
+        for user_doc in user_docs:
+            user_data = user_doc.to_dict()
+            users.append({
+                'user': user_data.get('user'),
+                'email': user_data.get('email'),
+                'password': '*' * len(user_data.get('password', '')),  # Contraseña enmascarada
+            })
 
-        if not user_doc:
-            return jsonify({"error": "Usuario no encontrado"}), 404
-
-        user_data = user_doc.to_dict()
-
-        # Reemplazar la contraseña por asteriscos
-        user_data["password"] = "*" * len(user_data["password"])
-
-        return jsonify({"message": "Bienvenido al dashboard", "user_data": user_data}), 200
+        return jsonify({"users": users}), 200
 
     except Exception as e:
-        traceback.print_exc()
         return jsonify({"error": "Token inválido o expirado", "details": str(e)}), 401
+    
