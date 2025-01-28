@@ -1,83 +1,146 @@
-from flask import Blueprint, request, jsonify
-from config import db  # Importamos la referencia de Firestore desde config.py
-from firebase_admin.auth import create_user as firebase_create_user, get_user_by_email as firebase_get_user_by_email, verify_id_token
+from flask import Blueprint, request, jsonify, redirect, url_for
+# Importar Firestore desde config.py
+from config import db  
+from firebase_admin.auth import (
+    create_user as firebase_create_user,
+    get_user_by_email as firebase_get_user_by_email,
+    verify_id_token,
+)
 from werkzeug.security import generate_password_hash, check_password_hash
+import traceback
 
 auth_bp = Blueprint("auth", __name__)
 
-# Ruta para registro de usuarios (Alineada con el frontend)
+
+# Ruta de la página principal
+@auth_bp.route("/", methods=["GET"])
+def main():
+    """
+    Redirige directamente a la página de inicio de sesión.
+    """
+    return redirect(url_for("auth.login_page"))
+
+
+# Ruta para la página de inicio de sesión
+@auth_bp.route("/inicio-sesion", methods=["GET"])
+def login_page():
+    """
+    Página de inicio de sesión: apunta al documento UserLogin.vue en el frontend.
+    """
+    return jsonify({"message": "Esta ruta apunta al documento UserLogin.vue en el frontend"})
+
+
+# Ruta para procesar el inicio de sesión
+@auth_bp.route("/inicio-sesion", methods=["POST"])
+def login():
+    """
+    Procesa el inicio de sesión con validación.
+    """
+    try:
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+
+        if not email or not password:
+            return jsonify({"error": "Correo y contraseña son obligatorios"}), 400
+
+        # Buscar el usuario en Firestore
+        users_ref = db.collection("users")
+        query = users_ref.where("email", "==", email).limit(1)
+        user_docs = query.stream()
+        user_doc = next(user_docs, None)  # Obtener el primer documento encontrado
+
+        if not user_doc:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+
+        user_data = user_doc.to_dict()
+
+        # Verificar la contraseña
+        if not check_password_hash(user_data["password"], password):
+            return jsonify({"error": "Contraseña incorrecta"}), 401
+
+        # Simular un token de sesión para fines de prueba (deberías usar JWT o sesiones reales)
+        token = "fake-session-token"
+
+        return jsonify(
+            {"message": "Inicio de sesión exitoso", "token": token, "user": user_data["user"], "email": user_data["email"]}
+        ), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": "Error al iniciar sesión"}), 500
+
+
+# Ruta para la página de registro
+@auth_bp.route("/registro", methods=["GET"])
+def register_page():
+    """
+    Página de registro: apunta al documento UserRegister.vue en el frontend.
+    """
+    return jsonify({"message": "Esta ruta apunta al documento UserRegister.vue en el frontend"})
+
+
+# Ruta para procesar el registro
 @auth_bp.route("/registro", methods=["POST"])
 def register():
+    """
+    Procesa el registro de usuarios con validación de contraseña.
+    """
     try:
         data = request.json
+        user = data.get("user")
+        email = data.get("email")
+        password = data.get("password")
 
         # Validar que los campos obligatorios estén presentes
-        if not data or "email" not in data or "password" not in data:
-            return jsonify({"error": "Faltan campos obligatorios"}), 400
+        if not user or not email or not password:
+            return jsonify({"error": "Todos los campos son obligatorios"}), 400
+
+        # Validar la contraseña
+        if len(password) < 8 or not any(char.isupper() for char in password) or not any(char.islower() for char in password) or not any(char.isdigit() for char in password) or not any(char in "@$!%*?&" for char in password):
+            return jsonify(
+                {
+                    "error": "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@$!%*?&)"
+                }
+            ), 400
 
         # Verificar si el usuario ya está registrado
         try:
             firebase_get_user_by_email(data["email"])
             return jsonify({"error": "El usuario ya está registrado"}), 409
         except Exception:
-            # Si el usuario no existe, Firebase lanzará un error (esto es esperado)
-            pass
+            pass  # Si no existe el usuario, Firebase lanza un error
 
         # Crear usuario en Firebase Authentication
         hashed_password = generate_password_hash(data["password"])
-        firebase_user = firebase_create_user(
-            email=data["email"],
-            password=data["password"],
-        )
+
+        firebase_user = firebase_create_user(email=data["email"], password=data["password"])
 
         # Guardar información adicional del usuario en Firestore
         user_data = {
-            "user":data["user"],
-            "email": data["email"],
-              "password": hashed_password
-              }
+            "user": user,
+            "email": email,
+            "password": hashed_password,
+        }
         db.collection("users").document(firebase_user.uid).set(user_data)
 
         return jsonify({"message": "Usuario registrado exitosamente"}), 201
 
     except Exception as e:
-        return jsonify({"error": "Error al registrar usuario", "details": str(e)}), 500
+        traceback.print_exc()
+        return jsonify({"error": "Error al registrar usuario"}), 500
 
 
-# Ruta para inicio de sesión (Alineada con el frontend)
-@auth_bp.route("/inicio-sesion", methods=["POST"])
-def login():
-    try:
-        data = request.json
-
-        # Validar que los campos obligatorios estén presentes
-        if not data or "email" not in data or "password" not in data:
-            return jsonify({"error": "Faltan campos obligatorios"}), 400
-
-        # Buscar el usuario en Firebase Authentication
-        user_ref = db.collection("users").where("email", "==", data["email"]).get()
-        if not user_ref:
-            return jsonify({"error": "Credenciales incorrectas"}), 401
-
-        # Obtener los datos del usuario
-        user_data = user_ref[0].to_dict()
-        if not check_password_hash(user_data["password"], data["password"]):
-            return jsonify({"error": "Credenciales incorrectas"}), 401
-
-        # Generar un token de autenticación usando Firebase (opcional)
-        return jsonify({"message": "Inicio de sesión exitoso"}), 200
-
-    except Exception as e:
-        return jsonify({"error": "Error durante el inicio de sesión", "details": str(e)}), 500
-
-
-# Ruta protegida para el dashboard
+# Ruta para la página del dashboard
 @auth_bp.route("/dashboard", methods=["GET"])
 def dashboard():
+    """
+    Muestra el dashboard con los datos de Firestore (contraseña con asteriscos).
+    Solo accesible para usuarios autenticados.
+    """
     try:
         auth_header = request.headers.get("Authorization")
 
-        # Validar que el token esté presente y en el formato correcto
         if not auth_header or not auth_header.startswith("Bearer "):
             return jsonify({"error": "No se proporcionó un token válido"}), 401
 
@@ -87,10 +150,22 @@ def dashboard():
         decoded_token = verify_id_token(token)
         user_email = decoded_token.get("email")
 
-        if user_email:
-            return jsonify({"email": user_email, "info": "Bienvenido al dashboard"}), 200
+        # Validar usuario en la base de datos
+        users_ref = db.collection("users")
+        query = users_ref.where("email", "==", user_email).limit(1)
+        user_docs = query.stream()
+        user_doc = next(user_docs, None)
 
-        return jsonify({"error": "Token inválido"}), 401
+        if not user_doc:
+            return jsonify({"error": "Usuario no encontrado"}), 404
+
+        user_data = user_doc.to_dict()
+
+        # Reemplazar la contraseña por asteriscos
+        user_data["password"] = "*" * len(user_data["password"])
+
+        return jsonify({"message": "Bienvenido al dashboard", "user_data": user_data}), 200
 
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": "Token inválido o expirado", "details": str(e)}), 401

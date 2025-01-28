@@ -1,5 +1,5 @@
 # Importación de dependencias
-from flask import Flask
+from flask import Flask, jsonify
 from auth.routes import auth_bp
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
@@ -14,7 +14,7 @@ def create_app():
     app.config.from_object(Config)
 
     # Configurar CORS
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # Configurar CSRF
     csrf = CSRFProtect(app)
@@ -32,11 +32,22 @@ app = create_app()
 # Manejadores de errores
 @app.errorhandler(404)
 def page_not_found(e):
-    return {'error': 'Page not found'}, 404
+    """Manejador de error para rutas no encontradas."""
+    return jsonify({'error': 'Page not found'}), 404
+
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return {'error': 'Internal server error'}, 500
+    """Manejador de error para errores internos del servidor."""
+    # Registrar el error en los logs para análisis
+    app.logger.error(f"Internal Server Error: {e}")
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=app.config['DEBUG'])
+    # Verificar que la configuración se cargó correctamente
+    app.logger.info("Configuración cargada:")
+    app.logger.info(f"DEBUG: {app.config['DEBUG']}")
+    app.logger.info(f"Entorno: {app.config['ENV']}")
+
+    # Ejecutar la aplicación Flask
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=app.config['DEBUG'])
