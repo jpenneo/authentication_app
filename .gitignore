@@ -1,0 +1,33 @@
+
+# Ignorar dependencias de Node.js
+node_modules/
+Frontend/node_modules/
+
+# Ignorar archivos de configuración del editor
+Frontend/.vs/
+.vscode/  # Se aplica globalmente (no es necesario repetirlo)
+
+# Ignorar archivos y carpetas del backend
+Backend/config/
+Backend/.env
+Backend/.venv/
+
+# Ignorar archivos de entorno del frontend
+Frontend/.env
+
+# Evitar archivos compilados o temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Evitar archivos innecesarios de Vue y npm
+dist/
+npm-debug.log
+yarn-error.log
+
+# Evitar archivos de logs generales
+*.log
+logs/
+
+
