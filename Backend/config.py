@@ -5,13 +5,20 @@ import firebase_admin
 from dotenv import load_dotenv
 
 load_dotenv()
+
 class Config:
     """Configuración para la aplicación Flask."""
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "default_secret")
     WTF_CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY", "csrf_default_secret")
     DEBUG = os.getenv("FLASK_DEBUG", "True") == "True"
     ENV = os.getenv("FLASK_ENV", "production")
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5000")  # URL del frontend configurable
+    
+    # URLs del frontend configurables
+    FRONTEND_URLS = [
+        os.getenv("FRONTEND_URL1"),
+        os.getenv("FRONTEND_URL2"),
+        os.getenv("FRONTEND_URL3")
+    ]
 
     # Determinar las credenciales de Firebase
     if ENV == 'production':
@@ -36,8 +43,6 @@ class Config:
                 FIREBASE_CREDENTIALS = json.load(f)
         except FileNotFoundError:
             raise FileNotFoundError(f"El archivo de credenciales no se encuentra en la ruta: {FIREBASE_CREDENTIALS_PATH}")
-
-
 
 # Inicialización de Firebase
 def initialize_firebase():
