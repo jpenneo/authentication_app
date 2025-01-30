@@ -13,7 +13,7 @@ def create_app():
     app.config.from_object(Config)
 
     # Configurar CORS con las URLs del frontend
-    CORS(app, resources={r"/*": {"origins":"https://authentication-app-beryl.vercel.app/"}}, supports_credentials=True)
+    CORS(app, resources={r"/*": {"origins": Config.FRONTEND_URLS}}, supports_credentials=True)
 
     # Configurar CSRF
     csrf = CSRFProtect(app)
