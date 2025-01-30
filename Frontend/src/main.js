@@ -21,3 +21,17 @@ if (mountElement) {
 } else {
   console.error("El elemento de montaje no se encontró en el DOM.");
 }
+// Función para probar la conexión con el backend
+async function testConnection() {
+  try {
+    const response = await axios.get(`${process.env.VUE_APP_API_URL}/ping`, {
+      withCredentials: true,
+    });
+    console.log("Connection successful:", response.data);
+  } catch (error) {
+    console.error("Connection failed:", error);
+  }
+}
+
+// Llamar a la función de prueba de conexión
+testConnection();

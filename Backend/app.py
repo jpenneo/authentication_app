@@ -35,7 +35,10 @@ def create_app():
             samesite='Strict'  # Impide el envío en solicitudes de terceros
         )
         return response
-
+    @app.route('/ping', methods=['GET'])
+    def ping():
+        return jsonify({'message': 'pong'}), 200
+    
     return app
 
 # Crear la instancia de la aplicación
