@@ -32,7 +32,7 @@ def create_app():
             'csrf_token', csrf_token, 
             secure=True,  # Solo se enviará a través de HTTPS
             httponly=True,  # No accesible desde JavaScript
-            samesite='Strict'  # Impide el envío en solicitudes de terceros
+            samesite='None'  # permite el envio de cookies en CORS
         )
         return response
     @app.route('/ping', methods=['GET'])
