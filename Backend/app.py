@@ -21,20 +21,11 @@ def create_app():
     # Registrar el blueprint de autenticación
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    # Configurar un endpoint para devolver el token CSRF al frontend
-    @app.after_request
-    def add_csrf_token(response):
-        """Añadir el token CSRF a cada respuesta como un encabezado."""
-        csrf_token = generate_csrf()  # Generar el token CSRF
-        response.headers['X-CSRFToken'] = csrf_token  # Pasar el token en los encabezados de respuesta
-        # Agregar el token CSRF como una cookie segura
-        response.set_cookie(
-            'csrf_token', csrf_token, 
-            secure=True,  # Solo se enviará a través de HTTPS
-            httponly=True,  # No accesible desde JavaScript
-            samesite='None'  # permite el envio de cookies en CORS
-        )
-        return response
+    # Endpoint para obtener el token CSRF
+    @app.route('/get-csrf-token', methods=['GET'])
+    def get_csrf_token():
+        csrf_token = generate_csrf()
+        return jsonify({'csrf_token': csrf_token}), 200
 
     @app.route('/ping', methods=['GET'])
     def ping():

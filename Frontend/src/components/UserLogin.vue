@@ -30,7 +30,7 @@
 import DOMPurify from "dompurify";
 
 import axios from "axios";
-import { getCSRFToken } from "../utils/CSRF";
+import { getCSRFToken, fetchCSRFToken } from "../utils/CSRF";
 
 export default {
   name: "UserLogin",
@@ -52,10 +52,17 @@ export default {
       this.loading = true;
 
       try {
-        const csrfToken = getCSRFToken(); // Obtener el token CSRF desde la cookie
+        // Obtener el token CSRF desde localStorage
+        let csrfToken = getCSRFToken();
         if (!csrfToken) {
-          this.error = "Token CSRF no encontrado.";
-          return;
+          // Si el token no está en localStorage, obtenerlo desde el servidor
+          await fetchCSRFToken();
+          csrfToken = getCSRFToken();
+
+          if (!csrfToken) {
+            this.error = "Token CSRF no encontrado.";
+            return;
+          }
         }
 
         const response = await axios.post(

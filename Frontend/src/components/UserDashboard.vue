@@ -26,7 +26,7 @@
 <script>
 import DOMPurify from "dompurify";
 import axios from "axios";
-import { getCSRFToken } from "../utils/CSRF";
+import { getCSRFToken, fetchCSRFToken } from "../utils/CSRF";
 
 export default {
   data() {
@@ -49,17 +49,20 @@ export default {
           return;
         }
 
-        // Obtener el token CSRF desde los encabezados de la respuesta
-        const csrfToken = getCSRFToken();
-
-        // Verificar si el token CSRF existe
+        // Obtener el token CSRF desde localStorage
+        let csrfToken = getCSRFToken();
         if (!csrfToken) {
-          this.error =
-            "Token CSRF no encontrado. Por favor, recargue la página.";
-          this.$router.push("/inicio-sesion");
-          return;
-        }
+          // Si el token no está en localStorage, obtenerlo desde el servidor
+          await fetchCSRFToken();
+          csrfToken = getCSRFToken();
 
+          if (!csrfToken) {
+            this.error =
+              "Token CSRF no encontrado. Por favor, recargue la página.";
+            this.$router.push("/inicio-sesion");
+            return;
+          }
+        }
         const response = await axios.get(
           `${process.env.VUE_APP_API_URL}/auth/dashboard`,
           {
@@ -82,6 +85,11 @@ export default {
       } catch (error) {
         this.error = error.response ? error.response.data.error : error.message;
         console.error("Error al obtener los usuarios:", error);
+
+        // Redirigir al inicio de sesión en caso de error de autenticación
+        if (error.response && error.response.status === 401) {
+          this.$router.push("/inicio-sesion");
+        }
       }
     },
 

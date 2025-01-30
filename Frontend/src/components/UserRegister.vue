@@ -37,7 +37,7 @@
 
 <script>
 import axios from "axios";
-import { getCSRFToken } from "../utils/CSRF";
+import { getCSRFToken, fetchCSRFToken } from "../utils/CSRF";
 
 export default {
   data() {
@@ -58,11 +58,18 @@ export default {
       this.errorMessage = "";
 
       try {
-        const csrfToken = getCSRFToken(); // Obtener el token CSRF desde cookies/localStorage
+        // Obtener el token CSRF desde localStorage
+        let csrfToken = getCSRFToken();
         if (!csrfToken) {
-          this.errorMessage =
-            "Token CSRF no encontrado. Intenta recargar la página.";
-          return;
+          // Si el token no está en localStorage, obtenerlo desde el servidor
+          await fetchCSRFToken();
+          csrfToken = getCSRFToken();
+
+          if (!csrfToken) {
+            this.errorMessage =
+              "Token CSRF no encontrado. Intenta recargar la página.";
+            return;
+          }
         }
 
         const response = await axios.post(
