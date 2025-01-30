@@ -17,6 +17,7 @@ export const configureAxios = () => {
       if (token) {
         config.headers["X-CSRFToken"] = token;
       }
+      config.withCredentials = true;
       return config;
     },
     (error) => {
