@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, redirect, url_for
+from flask_wtf.csrf import generate_csrf 
 # Importar Firestore desde config.py
-from config import db,Config  
+from config import db, Config
 from firebase_admin.auth import (
     create_user as firebase_create_user,
     get_user_by_email as firebase_get_user_by_email,
@@ -12,7 +13,6 @@ import jwt
 
 auth_bp = Blueprint("auth", __name__)
 
-
 # Ruta raíz "/" que redirige a "/inicio-sesion"
 @auth_bp.route("/", methods=["GET"])
 def root():
@@ -20,7 +20,6 @@ def root():
     Redirige la ruta raíz (/) a /inicio-sesion.
     """
     return redirect(url_for("auth.login_page"))
-
 
 # Ruta para la página de inicio de sesión (GET)
 @auth_bp.route("/inicio-sesion", methods=["GET"])
@@ -30,14 +29,22 @@ def login_page():
     """
     return jsonify({"message": "Esta ruta apunta al documento UserLogin.vue en el frontend"})
 
-
-# Ruta para procesar el inicio de sesión
+# Ruta para procesar el inicio de sesión (POST)
 @auth_bp.route("/inicio-sesion", methods=["POST"])
 def login():
     """
     Procesa el inicio de sesión con validación.
     """
     try:
+        # Obtener el token CSRF de los encabezados
+        csrf_token = request.headers.get('X-CSRFToken')
+        if not csrf_token:
+            return jsonify({"error": "Token CSRF faltante"}), 400
+
+        # Verificar si el token CSRF coincide con el que está guardado en la sesión
+        if not csrf_token == generate_csrf():
+            return jsonify({"error": "Token CSRF no válido"}), 400
+
         data = request.get_json()
         email = data.get("email")
         password = data.get("password")
@@ -71,8 +78,7 @@ def login():
         traceback.print_exc()
         return jsonify({"error": "Error al iniciar sesión"}), 500
 
-
-# Ruta para la página de registro
+# Ruta para la página de registro (GET)
 @auth_bp.route("/registro", methods=["GET"])
 def register_page():
     """
@@ -80,14 +86,22 @@ def register_page():
     """
     return jsonify({"message": "Esta ruta apunta al documento UserRegister.vue en el frontend"})
 
-
-# Ruta para procesar el registro
+# Ruta para procesar el registro (POST)
 @auth_bp.route("/registro", methods=["POST"])
 def register():
     """
     Procesa el registro de usuarios con validación de contraseña.
     """
     try:
+        # Obtener el token CSRF de los encabezados
+        csrf_token = request.headers.get('X-CSRFToken')
+        if not csrf_token:
+            return jsonify({"error": "Token CSRF faltante"}), 400
+
+        # Verificar si el token CSRF coincide con el que está guardado en la sesión
+        if not csrf_token == generate_csrf():
+            return jsonify({"error": "Token CSRF no válido"}), 400
+
         data = request.json
         user = data.get("user")
         email = data.get("email")
@@ -101,7 +115,7 @@ def register():
         if len(password) < 8 or not any(char.isupper() for char in password) or not any(char.islower() for char in password) or not any(char.isdigit() for char in password) or not any(char in "@$!%*?&" for char in password):
             return jsonify(
                 {
-                    "error": "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@$!%*?&)"
+                    "error": "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (@$!%*?&) "
                 }
             ), 400
 
@@ -131,8 +145,7 @@ def register():
         traceback.print_exc()
         return jsonify({"error": "Error al registrar usuario"}), 500
 
-
-# Ruta para la página del dashboard
+# Ruta para la página del dashboard (GET)
 @auth_bp.route("/dashboard", methods=["GET"])
 def dashboard():
     """
@@ -140,6 +153,16 @@ def dashboard():
     Solo accesible para usuarios autenticados.
     """
     try:
+        # Obtener el token CSRF de los encabezados
+        csrf_token = request.headers.get('X-CSRFToken')
+        if not csrf_token:
+            return jsonify({"error": "Token CSRF faltante"}), 400
+
+        # Verificar si el token CSRF coincide con el que está guardado en la sesión
+        if not csrf_token == generate_csrf():
+            return jsonify({"error": "Token CSRF no válido"}), 400
+
+        # Obtener el token de autorización (JWT) desde los encabezados
         auth_header = request.headers.get("Authorization")
 
         if not auth_header or not auth_header.startswith("Bearer "):
@@ -147,7 +170,7 @@ def dashboard():
 
         token = auth_header.split(" ")[1]
 
-        # Verificar el token de Firebase
+        # Verificar el token de Firebase (JWT)
         try:
             decoded_token = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
@@ -173,4 +196,3 @@ def dashboard():
 
     except Exception as e:
         return jsonify({"error": "Token inválido o expirado", "details": str(e)}), 401
-    
