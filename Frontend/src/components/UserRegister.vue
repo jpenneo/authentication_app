@@ -81,6 +81,7 @@ export default {
           },
           {
             headers: {
+              "Content-Type": "application/json",
               "X-CSRFToken": csrfToken,
             },
             withCredentials: true, // Incluir cookies si es necesario
