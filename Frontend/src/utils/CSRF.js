@@ -4,7 +4,7 @@ import axios from "axios";
 export const fetchCSRFToken = async () => {
   try {
     const response = await axios.get(
-      `${import.meta.env.VUE_APP_API_URL}/get-csrf-token`
+      `${process.env.VUE_APP_API_URL}/get-csrf-token`
     );
     const token = response.data.csrf_token;
     if (token) {
