@@ -13,7 +13,7 @@ def create_app():
     app.config.from_object(Config)
 
     # Configurar CORS con las URLs del frontend
-    CORS(app, resources={r"/*": {"origins": Config.FRONTEND_URLS}}, supports_credentials=True)
+    CORS(app, resources={r"/*":{"origins": os.getenv("FRONTEND_URL")}}, supports_credentials=True)
 
     # Configurar CSRF
     csrf = CSRFProtect(app)
@@ -49,13 +49,11 @@ def internal_server_error(e):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    app.logger.info("Configuración cargada:")
-    app.logger.info(f"DEBUG: {app.config['DEBUG']}")
-    app.logger.info(f"Entorno: {app.config['ENV']}")
-    app.logger.info(f"Frontend URL1: {os.getenv('FRONTEND_URL1')}")
-    app.logger.info(f"Frontend URL2: {os.getenv('FRONTEND_URL2')}")
-    app.logger.info(f"Frontend URL3: {os.getenv('FRONTEND_URL3')}")
+   app.logger.info("Configuración cargada:")
+   app.logger.info(f"DEBUG: {app.config['DEBUG']}")
+   app.logger.info(f"Entorno: {app.config['ENV']}")
+   app.logger.info(f"Frontend URL: {os.getenv('FRONTEND_URL')}") 
 
     # Ejecutar la aplicación Flask en producción usando el puerto proporcionado por Render
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=app.config['DEBUG'])
+   port = int(os.getenv("PORT", 5000))
+   app.run(host="0.0.0.0", port=port, debug=app.config['DEBUG'])

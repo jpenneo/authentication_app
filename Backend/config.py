@@ -14,11 +14,7 @@ class Config:
     ENV = os.getenv("FLASK_ENV", "production")
     
     # URLs del frontend configurables
-    FRONTEND_URLS = [
-        os.getenv("FRONTEND_URL1"),
-        os.getenv("FRONTEND_URL2"),
-        os.getenv("FRONTEND_URL3")
-    ]
+    FRONTEND_URL= os.getenv("FRONTEND_URL")
 
     # Determinar las credenciales de Firebase
     if ENV == 'production':

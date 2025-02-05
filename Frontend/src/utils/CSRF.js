@@ -3,7 +3,9 @@ import axios from "axios";
 // Función para obtener el token CSRF desde el servidor
 export const fetchCSRFToken = async () => {
   try {
-    const response = await axios.get("/get-csrf-token");
+    const response = await axios.get(
+      `${import.meta.env.VUE_APP_API_URL}/get-csrf-token`
+    );
     const token = response.data.csrf_token;
     if (token) {
       localStorage.setItem("csrf_token", token); // También puedes usar sessionStorage si prefieres
