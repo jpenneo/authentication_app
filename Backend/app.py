@@ -16,7 +16,7 @@ def create_app():
     CORS(app, resources={r"/*":{"origins": os.getenv("FRONTEND_URL")}}, supports_credentials=True)
 
     # Configurar CSRF
-    csrf = CSRFProtect(app)
+    #csrf = CSRFProtect(app) ESto sólo es para pruebas.
 
     # Registrar el blueprint de autenticación
     app.register_blueprint(auth_bp, url_prefix='/auth')

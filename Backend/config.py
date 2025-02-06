@@ -9,7 +9,7 @@ load_dotenv()
 class Config:
     """Configuración para la aplicación Flask."""
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "default_secret")
-    WTF_CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY", "csrf_default_secret")
+    WTF_CSRF_SECRET_KEY = False #os.getenv("CSRF_SECRET_KEY", "csrf_default_secret")
     DEBUG = os.getenv("FLASK_DEBUG", "True") == "True"
     ENV = os.getenv("FLASK_ENV", "production")
     

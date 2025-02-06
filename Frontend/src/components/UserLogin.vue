@@ -52,7 +52,7 @@ export default {
 
       try {
         // Obtener el token CSRF desde localStorage
-        let csrfToken = getCSRFToken();
+        /*let csrfToken = getCSRFToken();
         if (!csrfToken) {
           // Si el token no está en localStorage, obtenerlo desde el servidor
           await fetchCSRFToken();
@@ -63,26 +63,26 @@ export default {
             this.loading = false;
             return;
           }
-        }
+        }*/
         const response = await axios.post(
           `${process.env.VUE_APP_API_URL}/auth/inicio-sesion`,
           {
             email: this.sanitizeInput(this.email),
             password: this.sanitizeInput(this.password),
-          },
-          {
+          }
+          /*{
             headers: {
               "X-CSRFToken": csrfToken,
             },
             withCredentials: true, // Incluir cookies si es necesario
-          }
+          }*/
         );
 
         // Almacenar el token CSRF y el token de autenticación
-        const newCsrfToken = response.headers["x-csrftoken"];
+        /*const newCsrfToken = response.headers["x-csrftoken"];
         if (newCsrfToken) {
           sessionStorage.setItem("csrf_token", newCsrfToken);
-        }
+        }*/
 
         const data = response.data;
         sessionStorage.setItem("token", data.token);

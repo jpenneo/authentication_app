@@ -60,7 +60,7 @@ export default {
 
       try {
         // Obtener el token CSRF desde localStorage
-        let csrfToken = getCSRFToken();
+        /*let csrfToken = getCSRFToken();
         if (!csrfToken) {
           // Si el token no está en localStorage, obtenerlo desde el servidor
           await fetchCSRFToken();
@@ -71,7 +71,7 @@ export default {
             this.loading = false;
             return;
           }
-        }
+        }*/
 
         const response = await axios.post(
           `${process.env.VUE_APP_API_URL}/auth/registro`,
@@ -79,21 +79,21 @@ export default {
             user: DOMPurify.sanitize(this.user),
             email: DOMPurify.sanitize(this.email),
             password: DOMPurify.sanitize(this.password),
-          },
-          {
+          }
+          /*{
             headers: {
               "Content-Type": "application/json",
               "X-CSRFToken": csrfToken,
             },
             withCredentials: true, // Incluir cookies si es necesario
-          }
+          }*/
         );
 
         // Obtener el nuevo token CSRF si el backend lo envía
-        const newCsrfToken = response.headers["x-csrftoken"];
+        /*const newCsrfToken = response.headers["x-csrftoken"];
         if (newCsrfToken) {
           sessionStorage.setItem("csrf_token", newCsrfToken);
-        }
+        }*/
 
         alert("Registro correcto, puede iniciar sesión.");
         this.$router.push("/inicio-sesion");

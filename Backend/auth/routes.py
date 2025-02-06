@@ -13,7 +13,7 @@ import jwt
 
 auth_bp = Blueprint("auth", __name__)
 
-csrf = CSRFProtect()
+#csrf = CSRFProtect()
 
 # Ruta raíz "/" que redirige a "/inicio-sesion"
 @auth_bp.route("/", methods=["GET"])
@@ -41,9 +41,9 @@ def login():
     """
     try:
         # Obtener el token CSRF de los encabezados
-        csrf_token = request.headers.get('X-CSRFToken')
-        if not csrf_token or csrf_token != session.get('csrf_token'):
-            return jsonify({"error": "Token CSRF no válido"}), 400
+        #csrf_token = request.headers.get('X-CSRFToken')
+        #if not csrf_token or csrf_token != session.get('csrf_token'):
+            #return jsonify({"error": "Token CSRF no válido"}), 400
 
         data = request.get_json()
         email = data.get("email")
@@ -96,13 +96,13 @@ def register():
     """
     try:
         # Obtener el token CSRF de los encabezados
-        csrf_token = request.headers.get('X-CSRFToken')
-        if not csrf_token or csrf_token != session.get('csrf_token'):
-            return jsonify({"error": "Token CSRF faltante"}), 400
+        #csrf_token = request.headers.get('X-CSRFToken')
+        #if not csrf_token or csrf_token != session.get('csrf_token'):
+            #return jsonify({"error": "Token CSRF faltante"}), 400
 
         # Verificar si el token CSRF coincide con el que está guardado en la sesión
-        if not csrf_token == generate_csrf():
-            return jsonify({"error": "Token CSRF no válido"}), 400
+        #if not csrf_token == generate_csrf():
+            #return jsonify({"error": "Token CSRF no válido"}), 400
 
         data = request.json
         user = data.get("user")
