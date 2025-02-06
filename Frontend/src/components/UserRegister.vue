@@ -37,6 +37,7 @@
 
 <script>
 import axios from "axios";
+import DOMPurify from "dompurify";
 import { getCSRFToken, fetchCSRFToken } from "../utils/CSRF";
 
 export default {
@@ -66,8 +67,8 @@ export default {
           csrfToken = getCSRFToken();
 
           if (!csrfToken) {
-            this.errorMessage =
-              "Token CSRF no encontrado. Intenta recargar la página.";
+            this.errorMessage = "Token CSRF no encontrado no tiene acceso.";
+            this.loading = false;
             return;
           }
         }
@@ -75,9 +76,9 @@ export default {
         const response = await axios.post(
           `${process.env.VUE_APP_API_URL}/auth/registro`,
           {
-            user: this.user,
-            email: this.email,
-            password: this.password,
+            user: DOMPurify.sanitize(this.user),
+            email: DOMPurify.sanitize(this.email),
+            password: DOMPurify.sanitize(this.password),
           },
           {
             headers: {
@@ -91,10 +92,10 @@ export default {
         // Obtener el nuevo token CSRF si el backend lo envía
         const newCsrfToken = response.headers["x-csrftoken"];
         if (newCsrfToken) {
-          localStorage.setItem("csrf_token", newCsrfToken);
+          sessionStorage.setItem("csrf_token", newCsrfToken);
         }
 
-        alert("Registro exitoso. Ahora puedes iniciar sesión.");
+        alert("Registro correcto, puede iniciar sesión.");
         this.$router.push("/inicio-sesion");
       } catch (error) {
         this.errorMessage =

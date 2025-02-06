@@ -8,7 +8,7 @@ export const fetchCSRFToken = async () => {
     );
     const token = response.data.csrf_token;
     if (token) {
-      localStorage.setItem("csrf_token", token); // También puedes usar sessionStorage si prefieres
+      sessionStorage.setItem("csrf_token", token); // Se puede usar tanto sessionStorage como locaStorage.
     }
   } catch (error) {
     console.error("Error fetching CSRF token:", error);
@@ -17,7 +17,7 @@ export const fetchCSRFToken = async () => {
 
 // Función para obtener el token CSRF desde localStorage o sessionStorage
 export const getCSRFToken = () => {
-  return localStorage.getItem("csrf_token"); // También puedes usar sessionStorage si prefieres
+  return sessionStorage.getItem("csrf_token"); // Se puede usar tanto sessionStorage como locaStorage.
 };
 
 // Configurar Axios
@@ -41,5 +41,4 @@ export const configureAxios = () => {
 // Inicializar CSRF token al cargar la aplicación
 export const initializeCSRF = async () => {
   await fetchCSRFToken();
-  configureAxios();
 };

@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify, redirect, url_for
-from flask_wtf.csrf import generate_csrf 
+from flask import Blueprint, request, jsonify, redirect, url_for, session
+from flask_wtf.csrf import CSRFProtect, generate_csrf 
 # Importar Firestore desde config.py
 from config import db, Config
 from firebase_admin.auth import (
@@ -12,6 +12,8 @@ import traceback
 import jwt
 
 auth_bp = Blueprint("auth", __name__)
+
+csrf = CSRFProtect()
 
 # Ruta raíz "/" que redirige a "/inicio-sesion"
 @auth_bp.route("/", methods=["GET"])
@@ -27,7 +29,9 @@ def login_page():
     """
     Página de inicio de sesión: apunta al documento UserLogin.vue en el frontend.
     """
-    return jsonify({"message": "Esta ruta apunta al documento UserLogin.vue en el frontend"})
+    csrf_token = generate_csrf()
+    session['csrf_token'] = csrf_token
+    return jsonify({"message": "Esta ruta apunta al documento UserLogin.vue en el frontend", "csrf_token": csrf_token})
 
 # Ruta para procesar el inicio de sesión (POST)
 @auth_bp.route("/inicio-sesion", methods=["POST"])
@@ -38,11 +42,7 @@ def login():
     try:
         # Obtener el token CSRF de los encabezados
         csrf_token = request.headers.get('X-CSRFToken')
-        if not csrf_token:
-            return jsonify({"error": "Token CSRF faltante"}), 400
-
-        # Verificar si el token CSRF coincide con el que está guardado en la sesión
-        if not csrf_token == generate_csrf():
+        if not csrf_token or csrf_token != session.get('csrf_token'):
             return jsonify({"error": "Token CSRF no válido"}), 400
 
         data = request.get_json()
@@ -84,7 +84,9 @@ def register_page():
     """
     Página de registro: apunta al documento UserRegister.vue en el frontend.
     """
-    return jsonify({"message": "Esta ruta apunta al documento UserRegister.vue en el frontend"})
+    csrf_token = generate_csrf()
+    session['csrf_token'] = csrf_token
+    return jsonify({"message": "Esta ruta apunta al documento UserRegister.vue en el frontend", "csrf_token": csrf_token})
 
 # Ruta para procesar el registro (POST)
 @auth_bp.route("/registro", methods=["POST"])
@@ -95,7 +97,7 @@ def register():
     try:
         # Obtener el token CSRF de los encabezados
         csrf_token = request.headers.get('X-CSRFToken')
-        if not csrf_token:
+        if not csrf_token or csrf_token != session.get('csrf_token'):
             return jsonify({"error": "Token CSRF faltante"}), 400
 
         # Verificar si el token CSRF coincide con el que está guardado en la sesión
@@ -153,15 +155,6 @@ def dashboard():
     Solo accesible para usuarios autenticados.
     """
     try:
-        # Obtener el token CSRF de los encabezados
-        csrf_token = request.headers.get('X-CSRFToken')
-        if not csrf_token:
-            return jsonify({"error": "Token CSRF faltante"}), 400
-
-        # Verificar si el token CSRF coincide con el que está guardado en la sesión
-        if not csrf_token == generate_csrf():
-            return jsonify({"error": "Token CSRF no válido"}), 400
-
         # Obtener el token de autorización (JWT) desde los encabezados
         auth_header = request.headers.get("Authorization")
 
@@ -189,7 +182,7 @@ def dashboard():
             users.append({
                 'user': user_data.get('user'),
                 'email': user_data.get('email'),
-                'password': '*' * len(user_data.get('password', '')),  # Contraseña enmascarada
+                'password': '*' * min(len(user_data.get('password', '')), 5),  # Contraseña enmascarada
             })
 
         return jsonify({"users": users}), 200

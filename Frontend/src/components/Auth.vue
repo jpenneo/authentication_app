@@ -33,8 +33,7 @@ export default {
           csrfToken = getCSRFToken();
 
           if (!csrfToken) {
-            this.error =
-              "Token CSRF no encontrado. Intenta recargar la página.";
+            this.error = "Token CSRF no encontrado no tiene acceso.";
             return;
           }
         }
@@ -70,8 +69,7 @@ export default {
           csrfToken = getCSRFToken();
 
           if (!csrfToken) {
-            this.error =
-              "Token CSRF no encontrado. Intenta recargar la página.";
+            this.error = "Token CSRF no encontrado no tiene acceso.";
             return;
           }
         }

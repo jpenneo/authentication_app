@@ -28,7 +28,6 @@
 
 <script>
 import DOMPurify from "dompurify";
-
 import axios from "axios";
 import { getCSRFToken, fetchCSRFToken } from "../utils/CSRF";
 
@@ -60,11 +59,11 @@ export default {
           csrfToken = getCSRFToken();
 
           if (!csrfToken) {
-            this.error = "Token CSRF no encontrado.";
+            this.error = "Token CSRF no encontrado no tiene acceso.";
+            this.loading = false;
             return;
           }
         }
-
         const response = await axios.post(
           `${process.env.VUE_APP_API_URL}/auth/inicio-sesion`,
           {
@@ -82,11 +81,11 @@ export default {
         // Almacenar el token CSRF y el token de autenticación
         const newCsrfToken = response.headers["x-csrftoken"];
         if (newCsrfToken) {
-          localStorage.setItem("csrf_token", newCsrfToken);
+          sessionStorage.setItem("csrf_token", newCsrfToken);
         }
 
         const data = response.data;
-        localStorage.setItem("token", data.token);
+        sessionStorage.setItem("token", data.token);
         this.$router.push("/dashboard");
       } catch (error) {
         this.error = error.response ? error.response.data.error : error.message;
@@ -139,8 +138,19 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
 button:hover {
   background-color: #0056b3;
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+  margin-top: 20px;
 }
 
 p {

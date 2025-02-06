@@ -42,7 +42,7 @@ export default {
 
     async fetchUsers() {
       try {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         if (!token) {
           this.error = "No está autenticado. Por favor, inicie sesión.";
           this.$router.push("/inicio-sesion");
@@ -57,8 +57,7 @@ export default {
           csrfToken = getCSRFToken();
 
           if (!csrfToken) {
-            this.error =
-              "Token CSRF no encontrado. Por favor, recargue la página.";
+            this.error = "Token CSRF no encontrado, no tiene acceso.";
             this.$router.push("/inicio-sesion");
             return;
           }
@@ -66,7 +65,6 @@ export default {
         const response = await axios.get(
           `${process.env.VUE_APP_API_URL}/auth/dashboard`,
           {
-            method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
               "X-CSRFToken": csrfToken,
@@ -78,7 +76,7 @@ export default {
         // Obtener el nuevo token CSRF desde los encabezados de la respuesta
         const newCsrfToken = response.headers["x-csrftoken"];
         if (newCsrfToken) {
-          localStorage.setItem("csrf_token", newCsrfToken); // Actualizar el token CSRF
+          sessionStorage.setItem("csrf_token", newCsrfToken); // Actualizar el token CSRF
         }
 
         this.users = response.data.users;
